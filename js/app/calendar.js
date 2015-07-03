@@ -138,7 +138,7 @@ var UICalendar = Backbone.View.extend({
 
 
 var collectionDays = new Backbone.Collection();
-collectionDays.reset(getDaysOfCalendar(new Date(1987, 1, 1)));
+collectionDays.reset(getDaysOfCalendar(new Date(2014, 6, 1)));
 
 
 var collectionNotes = new Backbone.Collection();
