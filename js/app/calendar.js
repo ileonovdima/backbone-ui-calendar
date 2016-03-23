@@ -16,11 +16,11 @@ var getDayOfWeak = function(date) {
     return day - 1;
 }
 
-var getPreviousDate = function(date){
+var getPreviousDate = function(date) {
     return new Date (new Date (date.getFullYear(), date.getMonth(), -1));
 }
 
-var getNextDate = function(date){
+var getNextDate = function(date) {
     return new Date (new Date (date.getFullYear(), date.getMonth(), getDaysInMonth(date)+1));
 }
 
@@ -28,7 +28,7 @@ var formatDateHead = function(date) {
     return monthNames[date.getMonth()] + ' ' + date.getFullYear();
 };
 
-var getDaysOfCalendar = function(date){
+var getDaysOfCalendar = function(date) {
     var summDaysOfCalendar = 42;
     var daysInMonth = getDaysInMonth(date);
 
@@ -59,49 +59,44 @@ var getDaysOfCalendar = function(date){
 
 }
 
-
-
 var ViewDayItem = Backbone.View.extend({
-    initialize: function(options){
-        this.elParent = options.elParent;
-        this.dayDblClick = options.dayDblClick.bind(this, this.model, this.elParent);
-        this.dayClick = options.dayClick.bind(this, this.model, this.elParent);
-        this.delegateEvents();
-    },
     tagName: "td",
     events: {
         "click a": "dayClick",
         "dblclick a": "dayDblClick"
     },
-    render: function(){
+
+    initialize: function(options) {
+        this.elParent = options.elParent;
+        this.dayDblClick = options.dayDblClick.bind(this, this.model, this.elParent);
+        this.dayClick = options.dayClick.bind(this, this.model, this.elParent);
+        this.delegateEvents();
+    },
+
+    render: function() {
         this.$el.html("<a>"+this.model.get("date").getDate()+"</a>");
         return this;
     }
 });
 
 var UICalendar = Backbone.View.extend({
-    constructor: function(options){
-        Backbone.View.apply(this, arguments);
-        this.listenTo(this.collection, 'reset', this.render);
-        this.date = this.collection.at(21).get("date");
-    },
-    events: {
-        "click .prev": "prev",
-        "click .next": "next"
-    },
-    prev: function() {
-        this.date = getPreviousDate(this.date);
-        this.collection.reset(getDaysOfCalendar(this.date));
-    },
-    next: function() {
-        this.date = getNextDate(this.date);
-        this.collection.reset(getDaysOfCalendar(this.date));
-    },
+
     tagName: "table",
     className: "ui-calendar",
     afterItemRender: null,
     dayDblClick:null,
     dayClick: null,
+    events: {
+        "click .prev": "prev",
+        "click .next": "next"
+    },
+
+    constructor: function(options) {
+        Backbone.View.apply(this, arguments);
+        this.listenTo(this.collection, 'reset', this.render);
+        this.date = this.collection.at(21).get("date");
+    },
+
     render: function() {
         this.$el.empty();
         var headEl = $("<tr><td><a class='prev'><</a></td><td colspan='5'><b>"+formatDateHead(this.date)+"</b></td><td ><a class='next'>></a></td></tr>");
@@ -117,50 +112,55 @@ var UICalendar = Backbone.View.extend({
         this.collection.each(function(model, index) {
             var viewDayItem = new ViewDayItem({model: model, dayDblClick: this.dayDblClick, dayClick: this.dayClick, elParent: this.el});
             tr.append(viewDayItem.render().el);
-            if( typeof this.afterItemRender === "function") {
+            if ( typeof this.afterItemRender === "function") {
                 this.afterItemRender(viewDayItem, model, index);
             }
-            if(model.get("otherMonth")){
+            if (model.get("otherMonth")) {
                 viewDayItem.$el.addClass("other-month")
             } else {
                 viewDayItem.$el.addClass("current-month")
             }
-            if(!((index + 1) % 7)){
+            if (!((index + 1) % 7)) {
                 this.$el.append(tr);
                 tr = $("<tr>");
             }
         }, this);
         return this;
+    },
+
+    prev: function() {
+        this.date = getPreviousDate(this.date);
+        this.collection.reset(getDaysOfCalendar(this.date));
+    },
+
+    next: function() {
+        this.date = getNextDate(this.date);
+        this.collection.reset(getDaysOfCalendar(this.date));
     }
-
 });
-
-
 
 var collectionDays = new Backbone.Collection();
 collectionDays.reset(getDaysOfCalendar(new Date(2014, 6, 1)));
-
-
 var collectionNotes = new Backbone.Collection();
 
-
-
 var Field = Backbone.View.extend({
-    initialize: function(){
+    initialize: function() {
         this.timeId = this.model.get('date').getTime();
     },
+
     className: "field",
     events:{
         "click": "stopProp",
         "click .textarea": "clickTextarea",
         "click button": "add",
     },
-    add: function(ev){
+
+    add: function(ev) {
         var val = this.$(".textarea").val();
         if (!val.length) return;
         var findModel = collectionNotes.findWhere({id: this.timeId});
 
-        if(findModel){
+        if (findModel) {
             findModel.set("text", val);
             collectionDays.trigger("reset");
         } else {
@@ -168,42 +168,45 @@ var Field = Backbone.View.extend({
             collectionDays.trigger("reset");
         }
     },
-    stopProp: function(ev){
+
+    stopProp: function(ev) {
         ev.stopPropagation();
     },
-    render: function(){
+
+    render: function() {
         this.$el.html("<textarea class = 'textarea' name='textarea'></textarea><button>сохранить</button>");
         var findModel = collectionNotes.findWhere({id: this.timeId});
-        if(findModel){
+        if (findModel) {
             this.$("textarea").val(findModel.get("text"));
         }
         var that  = this;
-        setTimeout(function(){
+        setTimeout(function() {
             that.$el.addClass("show");
         }, 100);
         return this;
     }
 
-})
-
+});
 
 var Note = UICalendar.extend({
     collection: collectionDays,
-    afterItemRender: function(view, model, index){
+    afterItemRender: function(view, model, index) {
         var timeId = model.get('date').getTime();
         var findModel = collectionNotes.findWhere({id: timeId});
-        if(findModel){
+        if (findModel) {
             view.$el.css("background", "#FFE3E3");
         }
     },
-    dayClick: function(model, el, ev){
+
+    dayClick: function(model, el, ev) {
         $(el).find(".field").remove();
     },
-    dayDblClick: function(model, el, ev){
+
+    dayDblClick: function(model, el, ev) {
         $(el).find(".field").remove();
         $(ev.target).append(new Field({model: model}).render().el)
     }
-})
+});
 
 
 var note  = new Note();
