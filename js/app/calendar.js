@@ -5,14 +5,14 @@ var dayNames = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
 var isLeapYear = function(year) {
     return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
 };
-    
+
 var getDaysInMonth = function(date) {
     return [31, (isLeapYear(date.getYear()) ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][date.getMonth()];
 };
 
 var getDayOfWeak = function(date) {
     var day = date.getDay();
-    if (day == 0) day = 7;
+    if (day === 0) day = 7;
     return day - 1;
 }
 
@@ -29,34 +29,34 @@ var formatDateHead = function(date) {
 };
 
 var getDaysOfCalendar = function(date){
-    var summDaysOfCalendar = 42;    
+    var summDaysOfCalendar = 42;
     var daysInMonth = getDaysInMonth(date);
-    
+
     var dayOfWeak = getDayOfWeak(new Date(date.getFullYear(), date.getMonth(), 1));
-        
+
     var previousDate = getPreviousDate(date)
     var nextsDate = getNextDate(date)
-    
+
     var daysOfCalendar = [];
-        
+
     var daysInPreviousMonth = getDaysInMonth(previousDate);
-        
+
     for (var i = 0; i < dayOfWeak; i++) {
-        daysOfCalendar.unshift({date: new Date (previousDate.getFullYear(), previousDate.getMonth(), daysInPreviousMonth - i), otherMonth:true }); 
+        daysOfCalendar.unshift({date: new Date (previousDate.getFullYear(), previousDate.getMonth(), daysInPreviousMonth - i), otherMonth:true });
     }
-    
+
     for (var i = 1; i <= daysInMonth; i++) {
         daysOfCalendar.push({date: new Date (date.getFullYear(), date.getMonth(), i), otherMonth:false });
-    }        
-    
+    }
+
     var restDays = summDaysOfCalendar - daysOfCalendar.length;
 
     for (var i = 1; i <= restDays; i++) {
         daysOfCalendar.push({date: new Date (nextsDate.getFullYear(), nextsDate.getMonth(), i), otherMonth:true });
     }
-    
-    return  daysOfCalendar;  
-        
+
+    return  daysOfCalendar;
+
 }
 
 
@@ -64,13 +64,13 @@ var getDaysOfCalendar = function(date){
 var ViewDayItem = Backbone.View.extend({
     initialize: function(options){
         this.elParent = options.elParent;
-        this.dayDblClick = options.dayDblClick.bind(this, this.model, this.elParent); 
-        this.dayClick = options.dayClick.bind(this, this.model, this.elParent); 
+        this.dayDblClick = options.dayDblClick.bind(this, this.model, this.elParent);
+        this.dayClick = options.dayClick.bind(this, this.model, this.elParent);
         this.delegateEvents();
     },
     tagName: "td",
-    events: { 
-        "click a": "dayClick", 
+    events: {
+        "click a": "dayClick",
         "dblclick a": "dayDblClick"
     },
     render: function(){
@@ -83,19 +83,19 @@ var UICalendar = Backbone.View.extend({
     constructor: function(options){
         Backbone.View.apply(this, arguments);
         this.listenTo(this.collection, 'reset', this.render);
-        this.date = this.collection.at(21).get("date");   
+        this.date = this.collection.at(21).get("date");
     },
     events: {
         "click .prev": "prev",
-        "click .next": "next"   
+        "click .next": "next"
     },
     prev: function() {
         this.date = getPreviousDate(this.date);
-        this.collection.reset(getDaysOfCalendar(this.date)); 
+        this.collection.reset(getDaysOfCalendar(this.date));
     },
     next: function() {
         this.date = getNextDate(this.date);
-        this.collection.reset(getDaysOfCalendar(this.date));    
+        this.collection.reset(getDaysOfCalendar(this.date));
     },
     tagName: "table",
     className: "ui-calendar",
@@ -107,12 +107,12 @@ var UICalendar = Backbone.View.extend({
         var headEl = $("<tr><td><a class='prev'><</a></td><td colspan='5'><b>"+formatDateHead(this.date)+"</b></td><td ><a class='next'>></a></td></tr>");
         this.$el.html(headEl);
         var dayNamesEl = dayNames.reduce(function(tr, item) {
-           tr.append("<td><b>" + item + "</b></td>")   
+           tr.append("<td><b>" + item + "</b></td>")
            return tr;
         }, $("<tr>"));
-        
+
         this.$el.append(dayNamesEl);
-        
+
         var tr = $("<tr>");
         this.collection.each(function(model, index) {
             var viewDayItem = new ViewDayItem({model: model, dayDblClick: this.dayDblClick, dayClick: this.dayClick, elParent: this.el});
@@ -127,8 +127,8 @@ var UICalendar = Backbone.View.extend({
             }
             if(!((index + 1) % 7)){
                 this.$el.append(tr);
-                tr = $("<tr>");    
-            }            
+                tr = $("<tr>");
+            }
         }, this);
         return this;
     }
@@ -159,7 +159,7 @@ var Field = Backbone.View.extend({
         var val = this.$(".textarea").val();
         if (!val.length) return;
         var findModel = collectionNotes.findWhere({id: this.timeId});
-         
+
         if(findModel){
             findModel.set("text", val);
             collectionDays.trigger("reset");
@@ -167,7 +167,7 @@ var Field = Backbone.View.extend({
             collectionNotes.add({"id": this.timeId, text: val});
             collectionDays.trigger("reset");
         }
-    }, 
+    },
     stopProp: function(ev){
         ev.stopPropagation();
     },
@@ -179,16 +179,16 @@ var Field = Backbone.View.extend({
         }
         var that  = this;
         setTimeout(function(){
-            that.$el.addClass("show");  
+            that.$el.addClass("show");
         }, 100);
         return this;
     }
-    
+
 })
 
 
 var Note = UICalendar.extend({
-    collection: collectionDays,    
+    collection: collectionDays,
     afterItemRender: function(view, model, index){
         var timeId = model.get('date').getTime();
         var findModel = collectionNotes.findWhere({id: timeId});
@@ -197,7 +197,7 @@ var Note = UICalendar.extend({
         }
     },
     dayClick: function(model, el, ev){
-        $(el).find(".field").remove();  
+        $(el).find(".field").remove();
     },
     dayDblClick: function(model, el, ev){
         $(el).find(".field").remove();
@@ -208,4 +208,3 @@ var Note = UICalendar.extend({
 
 var note  = new Note();
 $(".calendar").html(note.render().el);
-
